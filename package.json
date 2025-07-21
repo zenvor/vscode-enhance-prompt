@@ -5,7 +5,7 @@
   "version": "0.0.1",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/zenvor/vscode-enhance-prompt"
   },
   "engines": {
     "vscode": "^1.85.0"

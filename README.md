@@ -11,7 +11,7 @@
 
 ## 安装
 ```bash
-git clone https://github.com/yourname/vscode-enhance-prompt.git
+git clone https://github.com/zenvor/vscode-enhance-prompt
 cd vscode-enhance-prompt
 npm i
 npm run build
