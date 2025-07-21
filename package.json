@@ -1,0 +1,71 @@
+{
+  "name": "vscode-enhance-prompt",
+  "displayName": "Enhance Prompt",
+  "description": "一键将口语化描述增强为结构化开发任务（DeepSeek LLM 驱动）",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "publisher": "your-name",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:enhancePrompt.enhance"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Enhance Prompt",
+      "properties": {
+        "enhancePrompt.deepseekApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "DeepSeek API Key（若留空则使用环境变量 DEEPSEEK_API_KEY）"
+        },
+        "enhancePrompt.model": {
+          "type": "string",
+          "default": "deepseek-chat",
+          "description": "DeepSeek 模型名称，例如 deepseek-chat / deepseek-reasoner"
+        },
+        "enhancePrompt.temperature": {
+          "type": "number",
+          "default": 0.2,
+          "description": "生成温度"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "enhancePrompt.enhance",
+        "title": "Enhance Prompt: 当前选中文本"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "enhancePrompt.enhance",
+        "key": "ctrl+alt+e",
+        "when": "editorTextFocus"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "build": "npm run compile",
+    "prepackage": "npm run build",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.6.0",
+    "typescript": "^5.8.3",
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^24.0.15"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
+}

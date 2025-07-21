@@ -1,0 +1,25 @@
+# ---- 源码 & 构建产物 ----
+src/           # TypeScript 源码
+*.ts
+*.map          # SourceMap
+tsconfig.json  # TS 配置
+.vscode/       # VSCode 工作区设置
+.vscode-test/  # VSCode 扩展测试运行时
+tests*/        # 单元 / 集成测试
+coverage/      # 覆盖率结果
+
+# ---- 文档 & 配置(可选保留 README) ----
+README.md
+CHANGELOG.md
+.vscodeignore  # 专供 .vsix 打包忽略，不用给 npm
+.github/       # CI/CD 配置
+.git*
+
+# ---- 依赖 & 临时文件 ----
+node_modules/
+npm-debug.log*
+yarn.lock
+pnpm-lock.yaml
+.DS_Store
+*.swp
+*.tmp
