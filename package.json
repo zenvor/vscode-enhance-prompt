@@ -36,31 +36,19 @@
         }
       }
     },
-    "commands": [
-      {
-        "command": "enhancePrompt.enhance",
-        "title": "Enhance Prompt: 当前选中文本"
-      }
-    ],
-    "keybindings": [
-      {
-        "command": "enhancePrompt.enhance",
-        "key": "ctrl+alt+e",
-        "when": "editorTextFocus"
-      }
-    ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "enhancePrompt",
           "title": "Enhance",
-          "icon": "media/sparkle.svg"   
+          "icon": "media/sparkle.svg"
         }
       ]
     },
     "views": {
       "enhancePrompt": [
         {
+          "icon": "media/sparkle.svg",
           "type": "webview",
           "id": "enhancePrompt.view",
           "name": "Enhance Prompt"
@@ -69,6 +57,7 @@
     }
   },
   "scripts": {
+    "watch": "tsc -w -p ./",
     "compile": "tsc -p ./",
     "build": "npm run compile",
     "prepackage": "npm run build",
