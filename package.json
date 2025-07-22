@@ -33,11 +33,6 @@
           "type": "number",
           "default": 0.2,
           "description": "生成温度"
-        },
-        "enhancePrompt.detectProjectProfile": {
-          "type": "boolean",
-          "default": true,
-          "description": "启动时扫描项目结构，推断技术栈并影响输出内容"
         }
       }
     },
