@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <style>
+    body { font-family: var(--vscode-font-family); padding: 8px; }
+    textarea { width: 100%; height: 120px; }
+    button { margin-top: 8px; }
+    pre { background: #1e1e1e; padding: 6px; white-space: pre-wrap; color: #dcdcdc; }
+  </style>
+</head>
+<body>
+  <h3>原始描述</h3>
+  <textarea id="input"></textarea>
+  <button id="run">✨ Enhance</button>
+  <h3>增强结果</h3>
+  <pre id="output"></pre>
+
+  <script>
+    const vscode = acquireVsCodeApi();
+    document.getElementById('run').onclick = () => {
+      const text = document.getElementById('input').value;
+      vscode.postMessage({ type: 'enhance', payload: text });
+    };
+    window.addEventListener('message', event => {
+      const msg = event.data;
+      if (msg.type === 'result') {
+        document.getElementById('output').textContent = msg.payload;
+      }
+    });
+  </script>
+</body>
+</html>

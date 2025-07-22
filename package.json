@@ -10,12 +10,9 @@
   "engines": {
     "vscode": "^1.85.0"
   },
-  "publisher": "your-name",
+  "publisher": "zenvor",
   "categories": [
     "Other"
-  ],
-  "activationEvents": [
-    "onCommand:enhancePrompt.enhance"
   ],
   "main": "./dist/extension.js",
   "contributes": {
@@ -51,7 +48,25 @@
         "key": "ctrl+alt+e",
         "when": "editorTextFocus"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "enhancePrompt",
+          "title": "Enhance",
+          "icon": "media/sparkle.svg"   
+        }
+      ]
+    },
+    "views": {
+      "enhancePrompt": [
+        {
+          "type": "webview",
+          "id": "enhancePrompt.view",
+          "name": "Enhance Prompt"
+        }
+      ]
+    }
   },
   "scripts": {
     "compile": "tsc -p ./",
