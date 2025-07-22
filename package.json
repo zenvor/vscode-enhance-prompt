@@ -51,7 +51,8 @@
           "icon": "media/sparkle.svg",
           "type": "webview",
           "id": "enhancePrompt.view",
-          "name": "Enhance Prompt"
+          "name": "Enhance Prompt",
+          "retainContextWhenHidden": true
         }
       ]
     }
