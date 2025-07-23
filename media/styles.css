@@ -1,0 +1,191 @@
+:root {
+  --radius: 2px;
+  --padding: 10px;
+}
+
+/* 重置默认样式 */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  width: 100%;
+  height: 100%;
+  background-color: var(--vscode-sideBar-background);
+  color: var(--vscode-editor-foreground);
+  padding: var(--padding);
+  min-height: 100vh;
+
+}
+
+body {
+  font-family: var(--vscode-font-family);
+  color: var(--vscode-editor-foreground);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--padding);
+  /* 防止初始渲染闪烁 */
+  opacity: 0;
+  /* 确保字体渲染一致性 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body.hydrated {
+  opacity: 1;
+}
+
+/* 预加载状态 - 显示骨架屏效果 */
+body:not(.hydrated) .input-box,
+body:not(.hydrated) .result {
+  background: var(--vscode-input-background);
+  border: 1px solid var(--vscode-input-border, var(--vscode-editorWidget-border));
+  border-radius: var(--radius);
+  animation: skeleton-loading 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    opacity: 0.6;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+/* 输入区 ---------------------------------------------------------------- */
+.input-box {
+  border: 1px solid var(--vscode-input-border, var(--vscode-editorWidget-border));
+  border-radius: var(--radius);
+  background: var(--vscode-input-background);
+  display: flex;
+  flex-direction: column;
+}
+
+.input-box:focus-within {
+  border-color: var(--vscode-focusBorder, #007acc);
+}
+
+textarea {
+  resize: none;
+  min-height: 100px;
+  max-height: 300px;
+  border: none;
+  outline: none;
+  padding: 8px;
+  background: transparent;
+  color: var(--vscode-input-foreground);
+  font-family: var(--vscode-editor-font-family, var(--vscode-font-family));
+  line-height: 1.4;
+  box-shadow: none;
+  /* 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+textarea::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+textarea::placeholder {
+  color: var(--vscode-input-placeholderForeground);
+}
+
+textarea:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+/* 工具栏 ---------------------------------------------------------------- */
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  padding: 6px 8px;
+  border-top: 1px solid var(--vscode-editorWidget-border);
+}
+
+.btn {
+  border: none;
+  cursor: pointer;
+  background: var(--vscode-button-background);
+  color: var(--vscode-button-foreground);
+  padding: 2px 10px;
+  border-radius: var(--radius);
+  font-size: 12px;
+  line-height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--vscode-button-hoverBackground, #005f9e);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--vscode-button-background); /* 避免 hover 变色 */
+}
+
+.btn img {
+  vertical-align: middle;
+  filter: brightness(0) invert(1); /* Make SVG white to match button text */
+}
+
+/* 结果区 ---------------------------------------------------------------- */
+.result {
+  border: 1px solid var(--vscode-editorWidget-border);
+  border-radius: var(--radius);
+  background: var(--vscode-editorWidget-background);
+  padding: 8px;
+  white-space: pre-wrap;
+  overflow-y: auto;
+  max-height: 400px;
+  font-family: var(--vscode-editor-font-family, var(--vscode-font-family));
+  /* 隐藏滚动条 */
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.result::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+/* 加载状态 - 移除遮挡文字的spin动画 */
+.loading {
+  position: relative;
+  opacity: 0.7;
+}
+
+/* 移除原来的::after伪元素spin动画，因为它会遮挡按钮文字 */
+
+/* 错误状态 */
+.error {
+  color: var(--vscode-errorForeground);
+  background: var(--vscode-inputValidation-errorBackground);
+  border-color: var(--vscode-inputValidation-errorBorder);
+}
+
+/* 成功状态 */
+.success {
+  color: var(--vscode-terminal-ansiGreen);
+}
+
+/* 开发模式专用样式 */
+.dev-only {
+  display: none !important;
+}
+
+.dev-mode .dev-only {
+  display: flex !important;
+}
+
+/* 开发模式指示器已在 HTML 中定义 */
+/* 开发信息面板已在 HTML 中定义 */

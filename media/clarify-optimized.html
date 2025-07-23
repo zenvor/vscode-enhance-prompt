@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1,shrink-to-fit=no" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none';
+               img-src vscode-resource: vscode-webview-resource: https: data: blob:;
+               style-src 'unsafe-inline' vscode-resource: vscode-webview-resource:;
+               script-src 'nonce-{{NONCE}}' 'unsafe-eval' vscode-resource: vscode-webview-resource:;
+               font-src vscode-resource: vscode-webview-resource:;
+               connect-src vscode-resource: vscode-webview-resource: ws: wss:;"
+    />
+    <title>Enhance Prompt — Clarify</title>
+
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="{{STYLES_URI}}" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" href="{{SPARKLES_URI}}" as="image" />
+
+    <!-- 样式表 - 使用 onload 确保样式加载完成 -->
+    <link rel="stylesheet" type="text/css" href="{{STYLES_URI}}" onload="document.documentElement.classList.add('styles-loaded')" />
+
+    <!-- 内联关键 CSS 防止 FOUC -->
+    <style>
+      /* 关键路径 CSS - 防止无样式内容闪烁 */
+      html {
+        background-color: var(--vscode-sideBar-background, #1e1e1e);
+        color: var(--vscode-editor-foreground, #cccccc);
+      }
+      body {
+        margin: 0;
+        font-family: var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+        opacity: 0;
+        transition: opacity 0.15s ease-in-out;
+      }
+      .hydrated { opacity: 1 !important; }
+
+      /* 开发模式样式 - 仅在开发模式下显示 */
+      .dev-mode body::before {
+        content: 'DEV MODE';
+        position: fixed;
+        top: 0;
+        right: 0;
+        background: #ff6b35;
+        color: white;
+        padding: 2px 6px;
+        font-size: 10px;
+        font-weight: bold;
+        z-index: 9999;
+        border-radius: 0 0 0 4px;
+      }
+
+      .dev-info {
+        position: fixed;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        color: #00ff00;
+        padding: 4px 8px;
+        font-size: 10px;
+        border-radius: 4px;
+        font-family: monospace;
+        z-index: 9998;
+        display: none;
+      }
+
+      .dev-mode .dev-info {
+        display: block;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- 开发信息显示 - 仅在开发模式下显示 -->
+    <div class="dev-info" id="devInfo">
+      Client: {{CLIENT_ID}}<br>
+      Hot Reload: Active
+    </div>
+
+    <!-- 输入框 -->
+    <div class="input-box">
+      <textarea id="input" placeholder="输入原始描述… ( Ctrl/Cmd + Enter 执行 )"></textarea>
+      <div class="toolbar">
+        <button id="runBtn" class="btn">
+          <img src="{{SPARKLES_URI}}" alt="sparkles" style="width: 14px; height: 14px" /> 增强
+        </button>
+        <button id="copyBtn" class="btn" disabled>复制</button>
+        <button id="clearBtn" class="btn" disabled>清空</button>
+      </div>
+    </div>
+
+    <!-- 结果展示 -->
+    <pre id="result" class="result" hidden></pre>
+
+    <!-- 配置注入脚本 -->
+    <script nonce="{{NONCE}}">
+      // 全局配置
+      window.enhancePromptClientId = "{{CLIENT_ID}}";
+      window.enhancePromptConfig = {}; // Will be replaced with {{CONFIG}} during template processing
+
+      // 状态水合标志
+      window.enhancePromptHydrated = false;
+
+      // 开发模式检测和初始化
+      window.isDevelopment = window.enhancePromptConfig?.isDevelopment || false;
+
+      // 如果是开发模式，添加相应的 CSS 类
+      if (window.isDevelopment) {
+        document.documentElement.classList.add('dev-mode');
+        console.log('[DEV] Development mode activated');
+      }
+    </script>
+
+    <!-- 开发模式热重载脚本 -->
+    <script nonce="{{NONCE}}">
+      // 开发模式热重载和调试工具
+      if (window.isDevelopment) {
+        let reloadCheckInterval;
+        let lastModified = Date.now();
+
+        const checkForReload = () => {
+          const now = Date.now();
+          if (now - lastModified > 30000) {
+            console.log('[DEV] Checking for updates...');
+            lastModified = now;
+          }
+        };
+
+        // 启动热重载检查
+        reloadCheckInterval = setInterval(checkForReload, 5000);
+
+        // 清理函数
+        window.addEventListener('beforeunload', () => {
+          if (reloadCheckInterval) {
+            clearInterval(reloadCheckInterval);
+          }
+        });
+
+        // 开发工具
+        window.devTools = {
+          clearState: () => {
+            const vscode = acquireVsCodeApi();
+            vscode.setState(null);
+            console.log('[DEV] State cleared');
+          },
+          logState: () => {
+            const vscode = acquireVsCodeApi();
+            console.log('[DEV] Current state:', vscode.getState());
+          },
+          logConfig: () => {
+            console.log('[DEV] Current config:', window.enhancePromptConfig);
+          }
+        };
+
+        console.log('[DEV] Development tools loaded. Use window.devTools for debugging.');
+      }
+    </script>
+
+    <!-- 主应用脚本 -->
+    <script nonce="{{NONCE}}">
+      ;(() => {
+        const vscode = acquireVsCodeApi()
+        const $input = document.getElementById('input')
+        const $run = document.getElementById('runBtn')
+        const $copy = document.getElementById('copyBtn')
+        const $clear = document.getElementById('clearBtn')
+        const $result = document.getElementById('result')
+        const $body = document.body
+        const $devInfo = document.getElementById('devInfo')
+
+        let enhancedText = ''
+        let isInitialized = false
+
+        // ---------- 开发模式特有功能 ----------
+        const initDevMode = () => {
+          if (!window.isDevelopment) return
+
+          // 开发模式按钮已移除
+
+          // 更新开发信息
+          const updateDevInfo = () => {
+            if ($devInfo) {
+              const state = vscode.getState()
+              $devInfo.innerHTML = `
+                Client: ${window.enhancePromptClientId.substring(0, 8)}...<br>
+                State: ${state ? 'Saved' : 'Empty'}<br>
+                Hot Reload: Active
+              `
+            }
+          }
+
+          // 定期更新开发信息
+          setInterval(updateDevInfo, 2000)
+          updateDevInfo()
+
+          console.log('[DEV] Development mode UI initialized')
+        }
+
+        // ---------- 状态水合和初始化 ----------
+        const initializeApp = () => {
+          if (isInitialized) return
+
+          // 恢复状态
+          restoreState()
+
+          // 初始化开发模式
+          initDevMode()
+
+          // 标记为已初始化
+          isInitialized = true
+          window.enhancePromptHydrated = true
+
+          // 显示界面（防闪烁）
+          $body.classList.add('hydrated')
+
+          // 通知扩展端 WebView 已准备就绪
+          vscode.postMessage({
+            type: 'ready',
+            clientId: window.enhancePromptClientId,
+            timestamp: Date.now()
+          })
+
+          const logPrefix = window.isDevelopment ? '[DEV]' : '[EnhancePrompt]'
+          console.log(`${logPrefix} App initialized with client ID:`, window.enhancePromptClientId)
+        }
+
+        // 等待扩展端初始化完成
+        const waitForExtensionReady = () => {
+          return new Promise((resolve) => {
+            const checkReady = () => {
+              if (window.enhancePromptClientId && window.enhancePromptConfig) {
+                resolve(true)
+              } else {
+                setTimeout(checkReady, 10)
+              }
+            }
+            checkReady()
+          })
+        }
+
+        // ---------- 状态保存和恢复 ----------
+        const saveState = () => {
+          const state = {
+            inputValue: $input.value,
+            enhancedText: enhancedText,
+            resultVisible: !$result.hidden,
+            buttonsEnabled: !$copy.disabled,
+            timestamp: Date.now()
+          }
+          vscode.setState(state)
+        }
+
+        const restoreState = () => {
+          const state = vscode.getState()
+          if (state) {
+            $input.value = state.inputValue || ''
+            enhancedText = state.enhancedText || ''
+            $result.textContent = enhancedText
+            $result.hidden = !state.resultVisible
+            $copy.disabled = $clear.disabled = !state.buttonsEnabled
+            
+            console.log('[EnhancePrompt] State restored from:', new Date(state.timestamp || 0))
+          }
+        }
+
+        // ---------- UI 操作辅助函数 ----------
+        const toggleBusy = (busy) => {
+          $run.disabled = busy
+          $run.classList.toggle('loading', busy)
+
+          if (busy) {
+            // 处理中状态：只显示文字，不显示图片，避免视觉干扰
+            $run.innerHTML = '处理中...'
+          } else {
+            $run.innerHTML = '<img src="{{SPARKLES_URI}}" alt="sparkles" style="width: 14px; height: 14px;"> 增强'
+          }
+        }
+
+        const showError = (message) => {
+          $result.textContent = `错误: ${message}`
+          $result.className = 'result error'
+          $result.hidden = false
+          $copy.disabled = $clear.disabled = false
+        }
+
+        const showSuccess = (content) => {
+          enhancedText = content
+          $result.textContent = enhancedText
+          $result.className = 'result success'
+          $result.hidden = false
+          $copy.disabled = $clear.disabled = false
+          saveState()
+        }
+
+        // ---------- 核心操作 ----------
+        const runClarify = () => {
+          const text = $input.value.trim()
+          if (!text) return
+          
+          toggleBusy(true)
+          vscode.postMessage({ 
+            type: 'clarify', 
+            payload: text,
+            clientId: window.enhancePromptClientId
+          })
+        }
+
+        const copyResult = async () => {
+          try {
+            await navigator.clipboard.writeText(enhancedText)
+            // 简单的视觉反馈
+            const originalText = $copy.textContent
+            $copy.textContent = '已复制'
+            setTimeout(() => {
+              $copy.textContent = originalText
+            }, 1000)
+          } catch (error) {
+            console.error('复制失败:', error)
+          }
+        }
+
+        const clearAll = () => {
+          $input.value = ''
+          $result.textContent = ''
+          $result.hidden = true
+          $result.className = 'result'
+          enhancedText = ''
+          $copy.disabled = $clear.disabled = true
+          saveState()
+        }
+
+        // ---------- 事件绑定 ----------
+        $run.addEventListener('click', runClarify)
+        $copy.addEventListener('click', copyResult)
+        $clear.addEventListener('click', clearAll)
+
+        $input.addEventListener('keydown', (e) => {
+          if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') {
+            e.preventDefault()
+            runClarify()
+          }
+        })
+
+        // 监听输入变化，保存状态
+        $input.addEventListener('input', saveState)
+
+        // 监听来自扩展的消息
+        window.addEventListener('message', (e) => {
+          const { type, payload, error, config } = e.data
+
+          switch (type) {
+            case 'result':
+              toggleBusy(false)
+              if (error) {
+                showError(error)
+              } else {
+                showSuccess(payload)
+              }
+              break
+
+            case 'init':
+              // 扩展端初始化完成，更新配置
+              if (config) {
+                window.enhancePromptConfig = { ...window.enhancePromptConfig, ...config }
+                console.log('[EnhancePrompt] Received init config:', config)
+              }
+              break
+
+            default:
+              console.log('[EnhancePrompt] Unknown message type:', type)
+          }
+        })
+
+        // ---------- 应用启动 ----------
+        // 等待配置就绪后初始化应用
+        waitForExtensionReady().then(() => {
+          // 使用 requestAnimationFrame 确保 DOM 完全准备好
+          requestAnimationFrame(() => {
+            initializeApp()
+          })
+        })
+
+        // 页面可见性变化时重新初始化（处理 WebView 隐藏/显示）
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden && window.enhancePromptHydrated) {
+            console.log('[EnhancePrompt] WebView became visible, ensuring state consistency')
+            restoreState()
+          }
+        })
+      })()
+    </script>
+  </body>
+</html>
