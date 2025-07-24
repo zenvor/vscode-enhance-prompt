@@ -1,6 +1,6 @@
 :root {
   --radius: 2px;
-  --padding: 10px;
+  --padding: 16px;
 }
 
 /* 重置默认样式 */
@@ -26,7 +26,7 @@ body {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--padding);
+  gap: 8px;
   /* 防止初始渲染闪烁 */
   opacity: 0;
   /* 确保字体渲染一致性 */
@@ -89,12 +89,16 @@ input, select {
   border-color: var(--vscode-focusBorder, #007acc);
 }
 
+/* =============================
+   合并 textarea 和 textarea#input 样式，提升复用性
+   ============================= */
+
 textarea {
+  /* 通用样式 */
   border: 1px solid var(--vscode-input-border, transparent);
   resize: none;
   width: 100%;
   min-height: 100px;
-  border: none;
   outline: none;
   padding: 8px;
   background: transparent;
@@ -105,6 +109,7 @@ textarea {
   /* 隐藏滚动条 */
   scrollbar-width: none; /* Firefox */
   -ms-overflow-style: none; /* IE and Edge */
+  border: none;
 }
 
 textarea::-webkit-scrollbar {
@@ -114,6 +119,18 @@ textarea::-webkit-scrollbar {
 textarea::placeholder {
   color: var(--vscode-input-placeholderForeground);
 }
+
+textarea#input {
+  /* #input 独有的样式 */
+  max-height: 300px;
+  overflow-y: auto;
+  box-sizing: border-box;
+  line-height: 1.6;
+  padding: 10px 12px;
+  border-radius: 6px;
+  transition: box-shadow 0.2s;
+}
+
 /* 工具栏 ---------------------------------------------------------------- */
 .toolbar {
   display: flex;
@@ -203,10 +220,6 @@ textarea::placeholder {
   margin-bottom: var(--padding);
   border-radius: 6px;
   /* border: 1px solid var(--vscode-editorWidget-border); */
-}
-
-.config-content {
-  padding: 16px;
 }
 
 .config-field {
@@ -419,3 +432,138 @@ textarea::placeholder {
 
 /* 开发模式指示器已在 HTML 中定义 */
 /* 开发信息面板已在 HTML 中定义 */
+
+/* API 配置区域样式补充 */
+.api-config-section .config-field {
+  margin-bottom: 16px;
+}
+
+.api-config-section .config-field:last-child {
+  margin-bottom: 0;
+}
+
+.api-config-section .model-info {
+  margin: 0;
+  padding: 12px;
+  background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--vscode-editorWidget-border, #3c3c3c);
+  border-radius: 6px;
+}
+
+/* =============================
+   以下样式来自 clarify-optimized.html 的 <style> 标签
+   统一合并至全局样式表，便于维护
+   ============================= */
+
+html {
+  background-color: var(--vscode-sideBar-background, #1e1e1e);
+  color: var(--vscode-editor-foreground, #cccccc);
+}
+body {
+  margin: 0;
+  font-family: var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
+  opacity: 0;
+}
+body.hydrated {
+  opacity: 1 !important;
+}
+
+/* 开发模式样式 - 仅在开发模式下显示 */
+.dev-mode body::before {
+  content: 'DEV MODE';
+  position: fixed;
+  top: 0;
+  right: 0;
+  background: #ff6b35;
+  color: white;
+  padding: 2px 6px;
+  font-size: 10px;
+  font-weight: bold;
+  z-index: 9999;
+  border-radius: 0 0 0 4px;
+}
+.dev-info {
+  position: fixed;
+  bottom: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #00ff00;
+  padding: 4px 8px;
+  font-size: 10px;
+  border-radius: 4px;
+  font-family: monospace;
+  z-index: 9998;
+  display: none;
+}
+.dev-mode .dev-info {
+  display: block;
+}
+
+.model-display {
+  display: flex;
+  align-items: center;
+  margin-right: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+#currentModelDisplay {
+  font-size: 12px;
+  color: #ccc;
+  white-space: nowrap;
+}
+
+.api-config-section {
+  background: var(--vscode-sideBar-background, #252526);
+}
+.config-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+.config-header:hover {
+  background-color: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.1));
+}
+.config-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--vscode-editor-foreground, #cccccc);
+  margin: 0;
+}
+.config-toggle {
+  background: none;
+  border: none;
+  color: var(--vscode-editor-foreground, #cccccc);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+}
+.config-content {
+  margin-top: 10px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+  padding: 0 10px;
+}
+.config-content.collapsed {
+  display: none;
+}
+.config-left {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.config-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
