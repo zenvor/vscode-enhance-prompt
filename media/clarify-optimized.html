@@ -27,223 +27,7 @@
     />
 
     <!-- 内联关键 CSS 防止 FOUC -->
-    <style>
-      /* 关键路径 CSS - 防止无样式内容闪烁 */
-      html {
-        background-color: var(--vscode-sideBar-background, #1e1e1e);
-        color: var(--vscode-editor-foreground, #cccccc);
-      }
-      body {
-        margin: 0;
-        font-family: var(--vscode-font-family, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif);
-        opacity: 0;
-        transition: opacity 0.15s ease-in-out;
-      }
-
-      .hydrated {
-        opacity: 1 !important;
-      }
-
-      /* 开发模式样式 - 仅在开发模式下显示 */
-      .dev-mode body::before {
-        content: 'DEV MODE';
-        position: fixed;
-        top: 0;
-        right: 0;
-        background: #ff6b35;
-        color: white;
-        padding: 2px 6px;
-        font-size: 10px;
-        font-weight: bold;
-        z-index: 9999;
-        border-radius: 0 0 0 4px;
-      }
-
-      .dev-info {
-        position: fixed;
-        bottom: 10px;
-        left: 10px;
-        background: rgba(0, 0, 0, 0.8);
-        color: #00ff00;
-        padding: 4px 8px;
-        font-size: 10px;
-        border-radius: 4px;
-        font-family: monospace;
-        z-index: 9998;
-        display: none;
-      }
-
-      .dev-mode .dev-info {
-        display: block;
-      }
-
-      /* 模型选择器样式 */
-      #modelSelector {
-        display: flex;
-        align-items: center;
-        margin-right: 10px;
-        cursor: pointer;
-        padding: 4px 8px;
-        border-radius: 4px;
-        background-color: rgba(0, 0, 0, 0.2);
-        transition: background-color 0.2s;
-      }
-
-      #modelSelector:hover {
-        background-color: rgba(0, 0, 0, 0.3);
-      }
-
-      #currentModelDisplay {
-        font-size: 12px;
-        color: #ccc;
-        white-space: nowrap;
-      }
-
-
-
-      /* 弹出窗口样式 - 参考 Cline 的设计 */
-      .popup-container {
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%) scale(0.95);
-        background: var(--vscode-editor-background, var(--vscode-sideBar-background, #1e1e1e));
-        border: 1px solid var(--vscode-editorGroup-border, #3c3c3c);
-        border-radius: 8px;
-        box-shadow:
-          0 16px 48px rgba(0, 0, 0, 0.5),
-          0 8px 24px rgba(0, 0, 0, 0.3),
-          0 4px 12px rgba(0, 0, 0, 0.2);
-        min-width: 320px;
-        max-width: 480px;
-        width: 90vw;
-        max-height: 80vh;
-        overflow: hidden;
-        z-index: 10000;
-        display: none;
-        opacity: 0;
-        transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-        pointer-events: none;
-      }
-
-      .popup-container.show {
-        display: block;
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-        pointer-events: auto;
-      }
-
-      /* 弹出窗口头部 */
-      .popup-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 20px;
-        border-bottom: 1px solid var(--vscode-editorGroup-border, #3c3c3c);
-        background: var(--vscode-editor-background, #1e1e1e);
-      }
-
-      .popup-title {
-        font-size: 14px;
-        font-weight: 600;
-        color: var(--vscode-editor-foreground, #cccccc);
-        margin: 0;
-      }
-
-      .popup-close {
-        background: none;
-        border: none;
-        color: var(--vscode-editor-foreground, #cccccc);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        transition: background-color 0.15s ease;
-      }
-
-      .popup-close:hover {
-        background: var(--vscode-toolbar-hoverBackground, rgba(255, 255, 255, 0.1));
-      }
-
-      .popup-close:active {
-        background: var(--vscode-toolbar-activeBackground, rgba(255, 255, 255, 0.15));
-      }
-
-      /* 弹出窗口内容区域 */
-      .popup-content {
-        padding: 20px;
-        overflow-y: auto;
-        max-height: calc(80vh - 60px);
-      }
-
-      /* 弹出窗口内的配置字段样式调整 */
-      .popup-container .config-field {
-        margin-bottom: 20px;
-      }
-
-      .popup-container .config-field:last-child {
-        margin-bottom: 0;
-      }
-
-      /* 弹出窗口内的模型信息样式调整 */
-      .popup-container .model-info {
-        margin: 16px 0 0 0;
-        padding: 12px;
-        background: var(--vscode-editorWidget-background, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--vscode-editorWidget-border, #3c3c3c);
-        border-radius: 6px;
-      }
-
-      /* 响应式设计 */
-      @media (max-width: 480px) {
-        .popup-container {
-          min-width: 280px;
-          width: 95vw;
-          max-height: 90vh;
-        }
-
-        .popup-header {
-          padding: 12px 16px;
-        }
-
-        .popup-content {
-          padding: 16px;
-          max-height: calc(90vh - 50px);
-        }
-      }
-
-      /* 可调整大小的手柄 */
-      .popup-resize-handle {
-        position: absolute;
-        bottom: 0;
-        right: 0;
-        width: 16px;
-        height: 16px;
-        cursor: se-resize;
-        background: linear-gradient(
-          -45deg,
-          transparent 0%,
-          transparent 40%,
-          var(--vscode-editorGroup-border, #3c3c3c) 40%,
-          var(--vscode-editorGroup-border, #3c3c3c) 45%,
-          transparent 45%,
-          transparent 55%,
-          var(--vscode-editorGroup-border, #3c3c3c) 55%,
-          var(--vscode-editorGroup-border, #3c3c3c) 60%,
-          transparent 60%
-        );
-        opacity: 0.6;
-        transition: opacity 0.15s ease;
-      }
-
-      .popup-resize-handle:hover {
-        opacity: 1;
-      }
-    </style>
+    <!-- 样式已合并至 styles.css，原 <style> 标签已移除 -->
   </head>
 
   <body>
@@ -253,59 +37,74 @@
       Hot Reload: Active
     </div>
 
-    <!-- API 配置区域 - 现在通过弹出窗口访问 -->
-    <div class="api-config-panel" style="display: none;">
-      <!-- API Provider 显示（不可选择） -->
-      <div class="config-field">
-        <label class="config-label">API Provider</label>
-        <div class="provider-display">
-          <span class="provider-name">DeepSeek</span>
-        </div>
+    <!-- API 配置区域 - 移到页面顶部 -->
+    <div class="api-config-section">
+      <div class="config-header">
+        <h3 class="config-title">API Provider Settings</h3>
+        <button class="config-toggle" id="configToggle" title="Toggle Settings">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+            <path d="M3 1.5L7.5 6L3 10.5L4 11.5L9.5 6L4 0.5L3 1.5Z"/>
+          </svg>
+        </button>
       </div>
 
-      <!-- API Key 输入 -->
-      <div class="config-field">
-        <label class="config-label">DeepSeek API Key</label>
-        <div class="api-key-container">
-          <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Enter API Key..." />
-        </div>
-        <p class="config-description">
-          This key is stored locally and only used to make API requests from this extension.
-        </p>
-      </div>
+      <div class="config-content collapsed" id="configContent">
+        <div class="config-left">
+          <!-- API Provider 显示（不可选择） -->
+          <div class="config-field">
+            <label class="config-label">API Provider</label>
+            <div class="provider-display">
+              <span class="provider-name">DeepSeek</span>
+            </div>
+          </div>
 
-      <!-- Model 选择 -->
-      <div class="config-field">
-        <label class="config-label">Model</label>
-        <div class="dropdown-container">
-          <select id="modelSelect" class="config-dropdown">
-            <option value="deepseek-chat" selected>deepseek-chat</option>
-            <option value="deepseek-reasoner">deepseek-reasoner</option>
-          </select>
-        </div>
-      </div>
+          <!-- API Key 输入 -->
+          <div class="config-field">
+            <label class="config-label">DeepSeek API Key</label>
+            <div class="api-key-container">
+              <input type="password" id="apiKeyInput" class="api-key-input" placeholder="Enter API Key..." />
+            </div>
+            <p class="config-description">
+              This key is stored locally and only used to make API requests from this extension.
+            </p>
+          </div>
 
-      <!-- 模型信息显示 -->
-      <div class="model-info" id="modelInfo">
-        <div class="info-item">
-          <span class="info-label">输出长度：</span>
-          <span class="info-value" id="maxOutputValue">默认 4K，最大 8K</span>
+          <!-- Model 选择 -->
+          <div class="config-field">
+            <label class="config-label">Model</label>
+            <div class="dropdown-container">
+              <select id="modelSelect" class="config-dropdown">
+                <option value="deepseek-chat" selected>deepseek-chat</option>
+                <option value="deepseek-reasoner">deepseek-reasoner</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div class="info-item">
-          <span class="info-label">输入价格：</span>
-          <span class="info-value" id="cacheWritePriceValue">2元/百万 tokens（标准）</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">缓存命中：</span>
-          <span class="info-value" id="cacheReadPriceValue">0.5元/百万 tokens（缓存命中）</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">输出价格：</span>
-          <span class="info-value" id="outputPriceValue">8元/百万 tokens（标准）</span>
-        </div>
-        <div class="info-item" style="font-size: 12px; color: #666; margin-top: 8px">
-          <span class="info-label">优惠时段：</span>
-          <span class="info-value">北京时间 00:30-08:30 享受 5 折优惠</span>
+
+        <div class="config-right">
+          <!-- 模型信息显示 -->
+          <div class="model-info" id="modelInfo">
+            <div class="info-item">
+              <span class="info-label">输出长度：</span>
+              <span class="info-value" id="maxOutputValue">默认 4K，最大 8K</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">输入价格：</span>
+              <span class="info-value" id="cacheWritePriceValue">2元/百万 tokens（标准）</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">缓存命中：</span>
+              <span class="info-value" id="cacheReadPriceValue">0.5元/百万 tokens（缓存命中）</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">输出价格：</span>
+              <span class="info-value" id="outputPriceValue">8元/百万 tokens（标准）</span>
+            </div>
+            <div class="info-item" style="font-size: 12px; color: #666; margin-top: 8px">
+              <span class="info-label">优惠时段：</span>
+              <span class="info-value">北京时间 00:30-08:30 享受 5 折优惠</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -316,9 +115,9 @@
         <textarea id="input" placeholder="输入原始描述… ( Ctrl/Cmd + Enter 执行 )"></textarea>
       </div>
       <div class="toolbar">
-        <a role="button" title="Select Model / API Provider" tabindex="0" id="modelSelector">
-          <div id="currentModelDisplay">deepseek-chat</div>
-        </a>
+        <div class="model-display">
+          <span id="currentModelDisplay">deepseek-chat</span>
+        </div>
         <div class="toolbar-right">
           <button id="runBtn" class="btn">
             <img src="{{SPARKLES_URI}}" alt="sparkles" style="width: 14px; height: 14px" /> 增强
@@ -334,78 +133,7 @@
 
 
 
-    <!-- API 配置弹出窗口 -->
-    <div class="popup-container" id="configPopup">
-        <!-- 弹出窗口头部 -->
-        <div class="popup-header">
-          <h3 class="popup-title">API Provider Settings</h3>
-          <button class="popup-close" id="popupCloseBtn" title="Close">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
-              <path d="M6 4.586L10.293.293a1 1 0 011.414 1.414L7.414 6l4.293 4.293a1 1 0 01-1.414 1.414L6 7.414l-4.293 4.293a1 1 0 01-1.414-1.414L4.586 6 .293 1.707A1 1 0 011.707.293L6 4.586z"/>
-            </svg>
-          </button>
-        </div>
 
-        <!-- 弹出窗口内容 -->
-        <div class="popup-content">
-          <!-- API Provider 显示（不可选择） -->
-          <div class="config-field">
-            <label class="config-label">API Provider</label>
-            <div class="provider-display">
-              <span class="provider-name">DeepSeek</span>
-            </div>
-          </div>
-
-          <!-- API Key 输入 -->
-          <div class="config-field">
-            <label class="config-label">DeepSeek API Key</label>
-            <div class="api-key-container">
-              <input type="password" id="popupApiKeyInput" class="api-key-input" placeholder="Enter API Key..." />
-            </div>
-            <p class="config-description">
-              This key is stored locally and only used to make API requests from this extension.
-            </p>
-          </div>
-
-          <!-- Model 选择 -->
-          <div class="config-field">
-            <label class="config-label">Model</label>
-            <div class="dropdown-container">
-              <select id="popupModelSelect" class="config-dropdown">
-                <option value="deepseek-chat" selected>deepseek-chat</option>
-                <option value="deepseek-reasoner">deepseek-reasoner</option>
-              </select>
-            </div>
-          </div>
-
-          <!-- 模型信息显示 -->
-          <div class="model-info" id="popupModelInfo">
-            <div class="info-item">
-              <span class="info-label">输出长度：</span>
-              <span class="info-value" id="popupMaxOutputValue">默认 4K，最大 8K</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">输入价格：</span>
-              <span class="info-value" id="popupCacheWritePriceValue">2元/百万 tokens（标准）</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">缓存命中：</span>
-              <span class="info-value" id="popupCacheReadPriceValue">0.5元/百万 tokens（缓存命中）</span>
-            </div>
-            <div class="info-item">
-              <span class="info-label">输出价格：</span>
-              <span class="info-value" id="popupOutputPriceValue">8元/百万 tokens（标准）</span>
-            </div>
-            <div class="info-item" style="font-size: 12px; color: #666; margin-top: 8px">
-              <span class="info-label">优惠时段：</span>
-              <span class="info-value">北京时间 00:30-08:30 享受 5 折优惠</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 可调整大小的手柄 -->
-        <div class="popup-resize-handle" id="popupResizeHandle"></div>
-    </div>
 
     <!-- 配置注入脚本 -->
     <script nonce="{{NONCE}}">
@@ -488,19 +216,11 @@
         const $modelSelect = document.getElementById('modelSelect')
         const $modelInfo = document.getElementById('modelInfo')
         const $currentModelDisplay = document.getElementById('currentModelDisplay')
-        const $modelSelector = document.getElementById('modelSelector')
 
-        // 弹出窗口相关元素
-        const $configPopup = document.getElementById('configPopup')
-        const $popupCloseBtn = document.getElementById('popupCloseBtn')
-        const $popupResizeHandle = document.getElementById('popupResizeHandle')
-        const $popupApiKeyInput = document.getElementById('popupApiKeyInput')
-        const $popupModelSelect = document.getElementById('popupModelSelect')
-        const $popupModelInfo = document.getElementById('popupModelInfo')
-        const $popupMaxOutputValue = document.getElementById('popupMaxOutputValue')
-        const $popupCacheWritePriceValue = document.getElementById('popupCacheWritePriceValue')
-        const $popupCacheReadPriceValue = document.getElementById('popupCacheReadPriceValue')
-        const $popupOutputPriceValue = document.getElementById('popupOutputPriceValue')
+        // 配置区域相关元素
+        const $configToggle = document.getElementById('configToggle')
+        const $configContent = document.getElementById('configContent')
+        const $configHeader = document.querySelector('.config-header')
 
         let enhancedText = ''
         let isInitialized = false
@@ -516,140 +236,26 @@
           }
         }
 
-        // ---------- 弹出窗口管理功能 ----------
-        const showConfigPopup = () => {
-          // 同步当前配置到弹出窗口
-          syncConfigToPopup()
-
-          // 显示弹出窗口
-          $configPopup.classList.add('show')
-
-          // 添加键盘事件监听
-          document.addEventListener('keydown', handlePopupKeydown)
-        }
-
-        const hideConfigPopup = () => {
-          $configPopup.classList.remove('show')
-
-          // 移除键盘事件监听
-          document.removeEventListener('keydown', handlePopupKeydown)
-        }
-
-        const handlePopupKeydown = (e) => {
-          if (e.key === 'Escape') {
-            hideConfigPopup()
+        // ---------- 配置区域管理功能 ----------
+        const toggleConfig = () => {
+          const isCollapsed = $configContent.classList.contains('collapsed')
+          if (isCollapsed) {
+            $configContent.classList.remove('collapsed')
+            // 更新箭头方向
+            $configToggle.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M6 9L1.5 4.5L2.5 3.5L6 7L9.5 3.5L10.5 4.5L6 9Z"/>
+              </svg>
+            `
+          } else {
+            $configContent.classList.add('collapsed')
+            // 更新箭头方向
+            $configToggle.innerHTML = `
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="currentColor">
+                <path d="M3 1.5L7.5 6L3 10.5L4 11.5L9.5 6L4 0.5L3 1.5Z"/>
+              </svg>
+            `
           }
-        }
-
-        // 弹出窗口可调整大小功能
-        let isResizing = false
-        let startX, startY, startWidth, startHeight
-
-        const initResize = (e) => {
-          isResizing = true
-          startX = e.clientX
-          startY = e.clientY
-
-          const rect = $configPopup.getBoundingClientRect()
-          startWidth = rect.width
-          startHeight = rect.height
-
-          document.addEventListener('mousemove', doResize)
-          document.addEventListener('mouseup', stopResize)
-          e.preventDefault()
-        }
-
-        const doResize = (e) => {
-          if (!isResizing) return
-
-          const width = startWidth + (e.clientX - startX)
-          const height = startHeight + (e.clientY - startY)
-
-          // 设置最小和最大尺寸
-          const minWidth = 320
-          const maxWidth = Math.min(window.innerWidth * 0.9, 800)
-          const minHeight = 200
-          const maxHeight = window.innerHeight * 0.9
-
-          const newWidth = Math.max(minWidth, Math.min(maxWidth, width))
-          const newHeight = Math.max(minHeight, Math.min(maxHeight, height))
-
-          $configPopup.style.width = `${newWidth}px`
-          $configPopup.style.height = `${newHeight}px`
-        }
-
-        const stopResize = () => {
-          isResizing = false
-          document.removeEventListener('mousemove', doResize)
-          document.removeEventListener('mouseup', stopResize)
-        }
-
-        const syncConfigToPopup = () => {
-          // 同步 API Key
-          $popupApiKeyInput.value = $apiKeyInput.value
-          $popupApiKeyInput.dataset.isMasked = $apiKeyInput.dataset.isMasked
-          $popupApiKeyInput.dataset.originalMask = $apiKeyInput.dataset.originalMask
-
-          // 同步模型选择
-          $popupModelSelect.value = $modelSelect.value
-
-          // 同步模型信息
-          updatePopupModelInfo($modelSelect.value)
-        }
-
-        const syncConfigFromPopup = () => {
-          // 同步 API Key
-          $apiKeyInput.value = $popupApiKeyInput.value
-          $apiKeyInput.dataset.isMasked = $popupApiKeyInput.dataset.isMasked
-          if ($popupApiKeyInput.dataset.originalMask) {
-            $apiKeyInput.dataset.originalMask = $popupApiKeyInput.dataset.originalMask
-          }
-
-          // 同步模型选择
-          $modelSelect.value = $popupModelSelect.value
-          selectedModel = $popupModelSelect.value
-
-          // 更新主界面显示
-          updateModelInfo(selectedModel)
-          updateCurrentModelDisplay(selectedModel)
-        }
-
-        const updatePopupModelInfo = (model) => {
-          // 根据选择的模型更新弹出窗口中的信息显示
-          const modelData = {
-            'deepseek-chat': {
-              maxOutput: '默认 4K，最大 8K',
-              cacheWritePrice: '2元/百万 tokens（标准）',
-              cacheReadPrice: '0.5元/百万 tokens（缓存命中）',
-              outputPrice: '8元/百万 tokens（标准）',
-            },
-            'deepseek-reasoner': {
-              maxOutput: '默认 32K，最大 64K',
-              cacheWritePrice: '4元/百万 tokens（标准）',
-              cacheReadPrice: '1元/百万 tokens（缓存命中）',
-              outputPrice: '16元/百万 tokens（标准）',
-            },
-            'deepseek-coder': {
-              maxOutput: '默认 4K，最大 8K',
-              cacheWritePrice: '2元/百万 tokens（标准）',
-              cacheReadPrice: '0.5元/百万 tokens（缓存命中）',
-              outputPrice: '8元/百万 tokens（标准）',
-            },
-          }
-
-          const data = modelData[model]
-          if (!data) {
-            $popupModelInfo.style.display = 'none'
-            return
-          }
-
-          $popupModelInfo.style.display = 'block'
-
-          // 动态更新弹出窗口中的模型信息
-          if ($popupMaxOutputValue) $popupMaxOutputValue.textContent = data.maxOutput
-          if ($popupCacheWritePriceValue) $popupCacheWritePriceValue.textContent = data.cacheWritePrice
-          if ($popupCacheReadPriceValue) $popupCacheReadPriceValue.textContent = data.cacheReadPrice
-          if ($popupOutputPriceValue) $popupOutputPriceValue.textContent = data.outputPrice
         }
 
         const updateModelInfo = (model) => {
@@ -852,7 +458,7 @@
           const state = {
             inputValue: $input.value,
             enhancedText: enhancedText,
-            resultVisible: !$result.hidden,
+            resultVisible: !!enhancedText, // 如果有增强文本，标记为可见状态
             buttonsEnabled: !$copy.disabled,
             timestamp: Date.now(),
           }
@@ -864,12 +470,17 @@
           if (state) {
             $input.value = state.inputValue || ''
             enhancedText = state.enhancedText || ''
-            $result.textContent = enhancedText
-            $result.hidden = !state.resultVisible
+            // 如果有增强后的文本且结果是可见的，说明之前增强过，将文本放入输入框
+            if (enhancedText && state.resultVisible) {
+              $input.value = enhancedText
+            }
+            // 结果区域保持隐藏，因为内容现在在输入框中
+            $result.hidden = true
             $copy.disabled = $clear.disabled = !state.buttonsEnabled
 
             console.log('[EnhancePrompt] State restored from:', new Date(state.timestamp || 0))
           }
+          autoResizeTextarea() // 【新增】恢复内容后自适应 textarea 高度
         }
 
         // ---------- UI 操作辅助函数 ----------
@@ -894,11 +505,14 @@
 
         const showSuccess = (content) => {
           enhancedText = content
-          $result.textContent = enhancedText
-          $result.className = 'result success'
-          $result.hidden = false
+          // 将增强后的文本替换输入框中的原有内容
+          $input.value = enhancedText
+          // 隐藏结果区域，因为内容已经在输入框中了
+          $result.hidden = true
+          $result.className = 'result'
           $copy.disabled = $clear.disabled = false
           saveState()
+          autoResizeTextarea() // 【新增】增强结果填充后，自动自适应 textarea 高度
         }
 
         // ---------- 核心操作 ----------
@@ -916,7 +530,9 @@
 
         const copyResult = async () => {
           try {
-            await navigator.clipboard.writeText(enhancedText)
+            // 复制当前输入框中的内容（增强后的文本）
+            const textToCopy = $input.value || enhancedText
+            await navigator.clipboard.writeText(textToCopy)
             // 简单的视觉反馈
             const originalText = $copy.textContent
             $copy.textContent = '已复制'
@@ -936,6 +552,7 @@
           enhancedText = ''
           $copy.disabled = $clear.disabled = true
           saveState()
+          autoResizeTextarea() // 【新增】清空后自适应 textarea 高度
         }
 
         // ---------- 事件绑定 ----------
@@ -943,48 +560,18 @@
         $copy.addEventListener('click', copyResult)
         $clear.addEventListener('click', clearAll)
 
-        // 弹出窗口相关事件
-        $modelSelector.addEventListener('click', (e) => {
+        // 配置区域相关事件 - 整个 header 可点击
+        $configHeader.addEventListener('click', (e) => {
           e.preventDefault()
           e.stopPropagation()
-          showConfigPopup()
+          toggleConfig()
         })
 
-        // 关闭按钮事件
-        $popupCloseBtn.addEventListener('click', (e) => {
+        // 箭头按钮事件 - 允许事件冒泡到父元素
+        $configToggle.addEventListener('click', (e) => {
           e.preventDefault()
-          e.stopPropagation()
-          hideConfigPopup()
-        })
-
-
-
-        // 阻止弹出窗口内部点击事件冒泡到外层
-        $configPopup.addEventListener('click', (e) => {
-          e.stopPropagation()
-        })
-
-        // 可调整大小手柄事件
-        $popupResizeHandle.addEventListener('mousedown', initResize)
-
-        // 弹出窗口内的模型选择事件
-        $popupModelSelect.addEventListener('change', (e) => {
-          // 阻止事件冒泡
-          e.stopPropagation()
-
-          const model = e.target.value
-          updatePopupModelInfo(model)
-          // 同步到主界面
-          $modelSelect.value = model
-          selectedModel = model
-          updateModelInfo(selectedModel)
-          updateCurrentModelDisplay(selectedModel)
-          autoSaveApiKey() // 模型变化时也触发自动保存
-        })
-
-        // 为弹出窗口中的模型选择器添加焦点事件阻止冒泡
-        $popupModelSelect.addEventListener('focus', (e) => {
-          e.stopPropagation()
+          // 移除 e.stopPropagation()，让事件冒泡到 config-header
+          // 这样点击箭头也能触发折叠功能
         })
 
         // 配置相关事件
@@ -992,125 +579,10 @@
           selectedModel = e.target.value
           updateModelInfo(selectedModel)
           updateCurrentModelDisplay(selectedModel)
-          // 同步到弹出窗口
-          $popupModelSelect.value = selectedModel
-          updatePopupModelInfo(selectedModel)
           autoSaveApiKey() // 模型变化时也触发自动保存
         })
 
-        // 弹出窗口中的 API Key 输入处理 - 采用 Cline 的精确交互方案
-        $popupApiKeyInput.addEventListener('focus', (e) => {
-          // 阻止事件冒泡，防止触发 input-box 的焦点样式
-          e.stopPropagation()
 
-          // 当用户点击输入框时，如果当前显示的是掩码，转换为可编辑的点号
-          if ($popupApiKeyInput.dataset.isMasked === 'true') {
-            // 保存原始掩码，以便恢复
-            $popupApiKeyInput.dataset.originalMask = $popupApiKeyInput.value
-
-            // 根据原始掩码长度生成相应长度的点号
-            const maskLength = $popupApiKeyInput.value.length
-            $popupApiKeyInput.value = '•'.repeat(maskLength) // 保持原有长度
-            $popupApiKeyInput.dataset.isMasked = 'editing' // 标记为编辑状态
-
-            // 选中所有内容，方便用户删除或替换
-            setTimeout(() => {
-              $popupApiKeyInput.select()
-            }, 0)
-          }
-        })
-
-        $popupApiKeyInput.addEventListener('input', (e) => {
-          // 阻止事件冒泡
-          e.stopPropagation()
-
-          // 用户开始输入时，标记为非掩码状态
-          if ($popupApiKeyInput.dataset.isMasked === 'editing') {
-            $popupApiKeyInput.dataset.isMasked = 'false'
-          }
-          // 同步到主界面
-          $apiKeyInput.value = $popupApiKeyInput.value
-          $apiKeyInput.dataset.isMasked = $popupApiKeyInput.dataset.isMasked
-          autoSaveApiKey() // API Key输入时自动保存
-        })
-
-        $popupApiKeyInput.addEventListener('blur', () => {
-          // 当输入框失去焦点时的处理
-          const currentValue = $popupApiKeyInput.value.trim()
-          const originalMask = $popupApiKeyInput.dataset.originalMask
-          const currentState = $popupApiKeyInput.dataset.isMasked
-
-          if (currentValue === '' && originalMask) {
-            // 如果为空且之前有掩码，这意味着用户想要删除API Key
-            // 发送删除请求
-            vscode.postMessage({
-              type: 'saveConfig',
-              payload: { apiKey: '', model: $popupModelSelect.value },
-              clientId: window.enhancePromptClientId,
-            })
-
-            // 保持空状态，不恢复掩码
-            $popupApiKeyInput.dataset.isMasked = 'false'
-            delete $popupApiKeyInput.dataset.originalMask
-            // 同步到主界面
-            $apiKeyInput.value = ''
-            $apiKeyInput.dataset.isMasked = 'false'
-            delete $apiKeyInput.dataset.originalMask
-          } else if (currentState === 'editing' && currentValue.startsWith('•') && originalMask) {
-            // 如果是未修改的编辑状态（完整的点号），恢复原始掩码
-            const originalLength = originalMask.length
-            if (currentValue === '•'.repeat(originalLength)) {
-              $popupApiKeyInput.value = originalMask
-              $popupApiKeyInput.dataset.isMasked = 'true'
-              delete $popupApiKeyInput.dataset.originalMask
-              // 同步到主界面
-              $apiKeyInput.value = originalMask
-              $apiKeyInput.dataset.isMasked = 'true'
-              delete $apiKeyInput.dataset.originalMask
-            } else {
-              // 部分编辑的点号，这意味着用户删除了部分内容，应该删除API Key
-              vscode.postMessage({
-                type: 'saveConfig',
-                payload: { apiKey: '', model: $popupModelSelect.value },
-                clientId: window.enhancePromptClientId,
-              })
-
-              // 清空输入框
-              $popupApiKeyInput.value = ''
-              $popupApiKeyInput.dataset.isMasked = 'false'
-              delete $popupApiKeyInput.dataset.originalMask
-              // 同步到主界面
-              $apiKeyInput.value = ''
-              $apiKeyInput.dataset.isMasked = 'false'
-              delete $apiKeyInput.dataset.originalMask
-            }
-          } else if (currentValue !== '' && !currentValue.startsWith('•')) {
-            // 如果有新的输入（不是点号），保持当前状态
-            $popupApiKeyInput.dataset.isMasked = 'false'
-            delete $popupApiKeyInput.dataset.originalMask
-            // 同步到主界面
-            $apiKeyInput.value = $popupApiKeyInput.value
-            $apiKeyInput.dataset.isMasked = 'false'
-            delete $apiKeyInput.dataset.originalMask
-          }
-        })
-
-        // 弹出窗口中的键盘处理
-        $popupApiKeyInput.addEventListener('keydown', (e) => {
-          // 如果在编辑状态下按下任何字符键，清空点号开始输入
-          if (
-            $popupApiKeyInput.dataset.isMasked === 'editing' &&
-            e.key.length === 1 &&
-            !e.ctrlKey &&
-            !e.metaKey &&
-            !e.altKey
-          ) {
-            // 不阻止默认行为，让字符正常输入
-            $popupApiKeyInput.value = ''
-            $popupApiKeyInput.dataset.isMasked = 'false'
-            // 字符会在 keydown 后自动输入
-          }
-        })
 
         // API Key 输入处理 - 采用 Cline 的精确交互方案
         $apiKeyInput.addEventListener('focus', () => {
@@ -1307,8 +779,14 @@
           }
         })
 
-        // 监听输入变化，保存状态
-        $input.addEventListener('input', saveState)
+        // 使 textarea 自适应高度
+        const autoResizeTextarea = () => {
+          $input.style.height = 'auto'
+          $input.style.height = Math.min($input.scrollHeight, 300) + 'px' // 最大高度 300px
+        }
+        $input.addEventListener('input', autoResizeTextarea)
+        // 初始化时也自适应
+        autoResizeTextarea()
 
         // 监听来自扩展的消息
         window.addEventListener('message', (e) => {
@@ -1334,41 +812,23 @@
                   $apiKeyInput.value = payload.apiKeyMasked
                   $apiKeyInput.placeholder = 'Enter API Key...'
                   $apiKeyInput.dataset.isMasked = 'true'
-
-                  // 同步到弹出窗口
-                  $popupApiKeyInput.value = payload.apiKeyMasked
-                  $popupApiKeyInput.placeholder = 'Enter API Key...'
-                  $popupApiKeyInput.dataset.isMasked = 'true'
                 } else {
                   // 没有API Key时显示空值
                   $apiKeyInput.value = ''
                   $apiKeyInput.placeholder = 'Enter API Key...'
                   $apiKeyInput.dataset.isMasked = 'false'
-
-                  // 同步到弹出窗口
-                  $popupApiKeyInput.value = ''
-                  $popupApiKeyInput.placeholder = 'Enter API Key...'
-                  $popupApiKeyInput.dataset.isMasked = 'false'
                 }
                 if (payload.model) {
                   $modelSelect.value = payload.model
                   selectedModel = payload.model
                   updateModelInfo(selectedModel)
                   updateCurrentModelDisplay(selectedModel)
-
-                  // 同步到弹出窗口
-                  $popupModelSelect.value = payload.model
-                  updatePopupModelInfo(payload.model)
                 } else {
                   // 如果没有保存的模型，默认选择deepseek-chat
                   $modelSelect.value = 'deepseek-chat'
                   selectedModel = 'deepseek-chat'
                   updateModelInfo(selectedModel)
                   updateCurrentModelDisplay(selectedModel)
-
-                  // 同步到弹出窗口
-                  $popupModelSelect.value = 'deepseek-chat'
-                  updatePopupModelInfo('deepseek-chat')
                 }
               }
               break
